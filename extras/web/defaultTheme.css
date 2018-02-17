@@ -1,0 +1,119 @@
+  body {
+    margin: 0;
+    background-color: #fff;
+  }
+
+  svg {
+    margin-top: 0px;
+    margin-bottom: 0px;
+  }
+
+  .labelbar text {
+    alignment-baseline: hanging;
+    font-size:12px;
+		font-weight:bold;
+  }
+
+  text {
+    fill: #444;
+    font-size: 10px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  }
+  text.minutia-stats {
+    alignment-baseline: middle;
+  }
+  text.pct-records {
+    font-size:10px;
+    alignment-baseline: middle;
+    text-anchor:left;
+  }
+  #dataprint_container {
+    width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 2px;
+    text-align: center;
+  }
+
+  #labelbar_container {
+    width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+  }
+
+  rect.quant-0 {
+    fill: none;
+    stroke: none;
+  }
+
+  rect.quant-1 {
+    stroke: none;
+    fill: #222;
+  }
+
+  rect.quant-2 {
+    stroke: none;
+    fill: #222;
+  }
+
+  rect.quant-3 {
+    stroke: none;
+    fill: #222;
+  }
+
+  rect.quant-4 {
+    fill: none;
+    stroke: none;
+  }
+
+  path.minutia {
+    shape-rendering: geometricPrecision;
+  }
+
+  .proportional path.minutia.series-0 {
+    fill: #20425A;
+		/* filter: url(#series-0-glow); */
+  }
+
+  .proportional path.minutia.series-1 {
+    fill: #F18A1C;
+		/* filter: url(#series-1-glow); */
+  }
+
+  rect.minutia {
+    fill: #ffc;
+    stroke: #ccc;
+  }
+
+  .proportional rect.minutia {
+    fill: #fff;
+    stroke: #fff;
+  }
+
+  .dataprintCaption {
+    font-size: 11px;
+    alignment-baseline: middle;
+  }
+
+  .axis path {
+    stroke: none;
+  }
+
+  .axis text {
+    font-size: 8px;
+  }
+
+  tspan.title {
+    font-weight:bold;
+  }
+
+  .grid path {
+    stroke: none;
+  }
+
+  .grid .tick line {
+    stroke: #eee;
+		stroke-width: 1;
+  	shape-rendering: crispEdges;
+  }

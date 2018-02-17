@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<script src="https://d3js.org/d3.v4.js"></script>
+	<link rel="stylesheet" type="text/css" href="defaultTheme.css">
+</head>
+
+<body>
+	<div id="labelbar_container">
+	</div>
+	<div id="dataprint_container">
+	</div>
+
+	<script>
+		var dataprintCaptionWidth = 120;
+		var pctLabelWidth = 50;
+		var margin = {
+			top: 14,
+			right: 2,
+			bottom: 5,
+			left: dataprintCaptionWidth
+		};
+
+		var width = 1500 - margin.left - margin.right,
+			height = 70 - margin.top - margin.bottom;
+
+		var spacer = 30;
+		var seriesHeight = height;
+
+		function minutiaSort(a, b) {
+			return a.caption > b.caption;
+		}
+
+		function renderLabelBar(dataprint) {
+			var minutiaWidth = calculateMinutiaWidth(dataprint);
+			dataprint.minutiae.sort(minutiaSort);
+			var svg = d3.select("#labelbar_container")
+				.append("svg")
+				.attr("width", width + margin.left + margin.right)
+				.attr("height", 30);
+
+			var tickCorrection = 12;
+			var gDataprint = svg.append("g")
+				.attr("transform", "translate(" + (dataprintCaptionWidth - tickCorrection) + "," + margin.top + ")")
+				.attr("class", "labelbar");
+
+			var groups = gDataprint.selectAll("g")
+				.data(dataprint.minutiae)
+				.enter()
+				.append("g");
+
+			// minutia display grouper
+			groups.attr("transform", function(d, i) {
+					return "translate(" + ((i * minutiaWidth) + (i * spacer) + (i * pctLabelWidth)) + ",0)";
+				})
+				.attr("y", 0);
+
+			groups.append("text")
+				.text(function(d) {
+					return d.caption;
+				});
+		}
+
+		function calculateMinutiaWidth(dataprint) {
+			return (width - (dataprint.minutiae.length * spacer) - (dataprint.minutiae.length * pctLabelWidth)) / dataprint.minutiae.length;
+		}
+
+		function renderDataprint(dataprint) {
+			var minutiaWidth = calculateMinutiaWidth(dataprint);
+
+			var areaBuilder1 = d3.area()
+				.x0(minutiaWidth / 2 - 2)
+				.x1(d => {
+					return d.x;
+				})
+				.y(d => {
+					return d.y;
+				})
+				.curve(d3.curveStep);
+
+			var areaBuilder2 = d3.area()
+				.x0(d => {
+					return d.x;
+				})
+				.x1(minutiaWidth / 2 + 2)
+				.y(d => {
+					return d.y;
+				})
+				.curve(d3.curveStep);
+
+			dataprint.minutiae.sort(minutiaSort);
+
+			var xSeriesDomains = [0, 0];
+			var xValues = [];
+			dataprint.totalRecords = 0;
+			dataprint.minutiae.forEach(function(minutia, minutiaIndex) {
+				minutia.totalRecords = 0;
+				minutia.series.forEach(function(series, seriesIndex) {
+					series.totalRecords = 0;
+					series.data.forEach(function(value, valueIndex) {
+						series.totalRecords += value.recordCount;
+						minutia.totalRecords += value.recordCount;
+						dataprint.totalRecords += value.recordCount;
+						xSeriesDomains[seriesIndex] += value.recordCount;
+						xValues.push(value.recordCount);
+					});
+				});
+			});
+
+			// normalize data
+			dataprint.maxPct = 0;
+			dataprint.minutiae.forEach(function(minutia, minutiaIndex) {
+				minutia.pctRecords = minutia.totalRecords / dataprint.totalRecords;
+				minutia.pctPeople = minutia.distinctPeople / dataprint.totalPeople;
+				minutia.recordsPerPerson = minutia.totalRecords / minutia.distinctPeople || 0;
+				dataprint.maxPct = Math.max(dataprint.maxPct, minutia.pctRecords);
+				minutia.series.forEach(function(series, seriesIndex) {
+					var domainX = series.data.map(function(d) {
+						return d.recordCount;
+					});
+
+					var domainY;
+					domainY = series.data.map(function(d) {
+						return d.ageBucket;
+					});
+					minutia.yDomain = domainY;
+					minutia.xDomain = domainX;
+
+					var xSeriesRanges = [];
+					xSeriesRanges.push([minutiaWidth / 2 - 2, 0]);
+					xSeriesRanges.push([minutiaWidth / 2 + 2, minutiaWidth]);
+
+					// a dataprint is expected to have data values from 0-100 at intervals of 5.
+					var y;
+					y = d3.scaleLinear().domain(d3.extent(domainY)).range([height, 0]);
+					minutia.yScale = y;
+
+					var x;
+					x = d3.scaleLinear().domain(d3.extent(domainX)).range(xSeriesRanges[seriesIndex]);
+					minutia.xScale = x;
+
+					series.layout = new Array(series.data.length);
+					series.data.forEach(function(value, valueIndex) {
+						series.layout[valueIndex] = {
+							"x": 0,
+							"y": 0
+						};
+						series.layout[valueIndex].x = x(value.recordCount);
+						series.data.totalPeople = xSeriesDomains[seriesIndex];
+						series.layout[valueIndex].y = y(value.ageBucket);
+					});
+				});
+			});
+
+			// render
+			var svg = d3.select("#dataprint_container")
+				.append("svg")
+				.attr("width", width + margin.left + margin.right)
+				.attr("height", height + margin.top + margin.bottom);
+
+			var dataprintCaptionText = dataprint.caption;
+			var dataprintTotalPeople = dataprint.totalPeople;
+			var dataprintTotalRecords = dataprint.totalRecords;
+			var dataprintCaption = svg.append("text")
+				.attr("x", 0)
+				.attr("y", 0)
+				.attr("class", "dataprintCaption");
+
+			dataprintCaption.append("tspan").attr("dy", "1.2em").attr("x", "10").text(dataprintCaptionText).attr('class', 'title');
+			dataprintCaption.append("tspan").attr("dy", "1.2em").attr("x", "10").text(d3.format("3.3s")(dataprintTotalPeople) + " people");
+			dataprintCaption.append("tspan").attr("dy", "1.2em").attr("x", "10").text(d3.format("3.3s")(dataprintTotalRecords).replace('G', 'B') + " records");
+
+			var gDataprint = svg.append("g")
+				.attr("transform", "translate(" + margin.left + ",0)")
+				.attr("class", "dataprint");
+
+			var groups = gDataprint.selectAll("g")
+				.data(dataprint.minutiae)
+				.enter()
+				.append("g");
+
+			groups.attr("transform", function(d, i) {
+					return "translate(" + ((i * minutiaWidth) + (i * spacer) + (i * pctLabelWidth)) + ",0)";
+				})
+				.attr("y", 0)
+				.attr("class", "proportional");
+
+			var statsTextOffsetX = 0;
+			var statsTextOffsetY = 0;
+			var statsText = groups.append("text")
+				.attr("y", statsTextOffsetY)
+				.attr("x", statsTextOffsetX)
+				.attr("class", "pct-records");
+
+			var statLineOffsetX = minutiaWidth + 10;
+			statsText.append("tspan").attr("x", statLineOffsetX).attr("dy", "1.0em").text(d => {
+				return d3.format("0.3s")(d.totalRecords).replace('G', ' B') + ' r';
+			}).attr('class', 'minutia-stats');
+			statsText.append("tspan").attr("x", statLineOffsetX).attr("dy", "1.1em").text(d => {
+				return d3.format('2.1%')(d.pctRecords) + ' r';
+			}).attr('class', 'minutia-stats');
+			statsText.append("tspan").attr("x", statLineOffsetX).attr("dy", "1.1em").text(d => {
+				return d3.format('2.1%')(d.pctPeople) + ' p';
+			}).attr('class', 'minutia-stats');
+			statsText.append("tspan").attr("x", statLineOffsetX).attr("dy", "1.1em").text(d => {
+				return d3.format('.0f')(d.recordsPerPerson) + ' r/p';
+			}).attr('class', 'minutia-stats');
+
+			groups.append("rect")
+				.attr("width", minutiaWidth)
+				.attr("height", seriesHeight)
+				.attr("class", "minutia");
+
+			var gridTicks;
+
+			groups.append("g")
+				.attr("class", "axis")
+				.attr("transform", "translate(0,0)")
+				.each(function(d) {
+					gridTicks = d3.axisLeft(d.yScale).ticks(6).tickValues([0, 20, 40, 60, 80, 100]);
+					d3.select(this).call(d3.axisLeft(d.yScale).tickValues([0, 20, 40, 60, 80]).tickSize(0));
+				});
+
+			// create a grid
+			groups.append("g")
+				.attr("class", "grid")
+				.attr("transform", "translate(0,0)")
+				.call(gridTicks.tickSize(-minutiaWidth)
+					.tickFormat(""));
+
+			groups.selectAll("path.distribution")
+				.data(function(d) {
+					return d.series.filter(function(d) {
+						return d.totalRecords > 0
+					});
+				})
+				.enter()
+				.append("path")
+				.attr("class", "distribution")
+				.attr("d", function(d, i) {
+					if (i == 0) {
+						return areaBuilder1(d.layout);
+					} else {
+						return areaBuilder2(d.layout)
+					}
+				})
+				.attr("class", function(d, i) {
+					return "minutia series-" + i;
+				});
+
+			var quantRectWidth = 3;
+			var quantRectHeight = 2;
+			groups.selectAll("rect.quantile")
+				.data(function(d) {
+					return d.stats.quantiles || [];
+				})
+				.enter()
+				.append("rect")
+				.attr("x", minutiaWidth / 2 - quantRectWidth / 2)
+				.attr("y", function(d) {
+					var y = d3.select(this.parentNode).datum().yScale;
+					return y(d) - quantRectHeight / 2;
+				})
+				.attr("class", function(d, i) {
+					return "quantile quant-" + i;
+				})
+				.attr("width", quantRectWidth)
+				.attr("height", quantRectHeight);
+		}
+
+		var databases = [
+			"test.json"
+		]; // add more here
+
+		d3.json("data/" + databases[0], function(data) {
+			renderLabelBar(data);
+		});
+
+		databases.forEach(function(filename) {
+			d3.json("data/" + filename, function(data) {
+				renderDataprint(data);
+			});
+		});
+	</script>
+</body>
+</html>

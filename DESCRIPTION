@@ -1,0 +1,12 @@
+Package: Dataprint
+Title: A Novel Visualization Tool for Database Comparison
+Version: 0.1
+Authors@R: person("Frank", "DeFalco", email = "fdefalco@its.jnj.com", role = c("aut", "cre"))
+Description: This package generates a dataprint file for a specified CDM V5 database to visualize the OHDSI network of data sources.
+Depends: R (>= 3.1.0), jsonlite, dplyr, DatabaseConnector, SqlRender
+License: Apache 2.0
+LazyData: true
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr
+RoxygenNote: 6.0.1
