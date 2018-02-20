@@ -41,10 +41,10 @@ python -m SimpleHTTPServer 1234
 3. Edit the array found in the `index.html` file to include the desired list of datasource JSON files that you have placed in the data directory.
 
 ```{javascript}
-		var databases = [
-			"test.json"
-			// add more here
-		]; 
+var databases = [
+	"test.json"
+	// add more here
+]; 
 ```
 
 ### References
