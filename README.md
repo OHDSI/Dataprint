@@ -32,14 +32,19 @@ jsonlite::write_json(dataprint, "test.json")
 ## Generating the Visualization
 The Dataprint R package contains files in the /extras/web folder that create a single datasource or network Dataprint visualization from a set of JSON files created by the Dataprint::generateDataprint method.  The following steps are required after generating the JSON file to render the visualization.
 
-1. Host the contents of the /extras/web folder on a web server.
-2. Place your JSON files in the data folder subdirectory of where you are hosting the /extras/web folder.
-3. Edit the array found in the index.html file to include the desired list of datasource JSON files that you have placed in the data directory.
+1. Host the contents of the `/extras/web` folder on a web server. For example with python:
+```bash
+cd extras/web
+python -m SimpleHTTPServer 1234
+```
+2. Place your JSON files in the `data` subdirectory of where you are hosting the `extras/web` folder.
+3. Edit the array found in the `index.html` file to include the desired list of datasource JSON files that you have placed in the data directory.
 
 ```{javascript}
-		var databases = [
-			"test.json"
-		]; // add more here
+var databases = [
+	"test.json"
+	// add more here
+]; 
 ```
 
 ### References
